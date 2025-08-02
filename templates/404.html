@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class="container mt-5">
+    <div class="alert alert-danger">
+      <h3>Fehler 404 – Seite nicht gefunden</h3>
+      <p>Die angeforderte Seite existiert nicht. Vielleicht ein Tippfehler?</p>
+      <a href="{{ url_for('home') }}" class="btn btn-primary">Zurück zum Dashboard</a>
+    </div>
+  </div>
+{% endblock %}

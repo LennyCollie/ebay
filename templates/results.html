@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">🔍 Ergebnisse für: <strong>{{ query }}</strong></h2>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    {% if results %}
+        <div class="row">
+            {% for item in results %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <img src="{{ item.image or '/static/placeholder.jpg' }}" class="card-img-top" alt="Bild" style="height:200px; object-fit:cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.title }}</h5>
+                            <p class="card-text"><strong>{{ item.price }} €</strong></p>
+                            <a href="{{ item.url }}" target="_blank" class="btn btn-primary">🛒 Ansehen</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>❗ Keine Ergebnisse gefunden.</p>
+    {% endif %}
+</div>
+{% endblock %}

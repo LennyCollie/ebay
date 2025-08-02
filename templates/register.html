@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Suchergebnisse für: <strong>{{ query }}</strong></h2>
+
+  {% if results %}
+    <div class="list-group mt-4">
+      {% for item in results %}
+        <div class="list-group-item">
+          <h5 class="mb-1">{{ item.title }}</h5>
+          <p class="mb-0"><strong>Preis:</strong> {{ item.price }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info mt-4">
+      😕 Keine Ergebnisse gefunden.
+    </div>
+  {% endif %}
+
+  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-4">🔙 Zurück zum Dashboard</a>
+</div>
+{% endblock %}

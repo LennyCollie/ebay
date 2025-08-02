@@ -1,0 +1,16 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Willkommen {{ current_user.email }}!</h1>
+    <form action="/create-checkout-session" method="POST">
+        <button type="submit">Premium kaufen</button>
+    </form>
+    <br>
+    <a href="/logout">Logout</a>
+</body>
+</html>

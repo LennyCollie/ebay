@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Willkommen, <strong>{{ user.email }}</strong>!</h2>
+
+  {% if user.is_premium %}
+    <div class="alert alert-success mt-3">
+      <i class="fas fa-crown"></i> ✅ Du bist Premium-Mitglied! Danke für deine Unterstützung❤️
+    </div>
+
+    <!-- PREMIUM INHALT -->
+    <div class="card mt-4">
+      <div class="card-header fw-bold">🔍 eBay-Suche für Premium-Nutzer</div>
+      <div class="card-body">
+        <form action="{{ url_for('search') }}" method="POST">
+          <div class="mb-3">
+            <label for="query" class="form-label">Suchbegriff</label>
+            <input type="text" class="form-control" id="query" name="query" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Suchen</button>
+        </form>
+      </div>
+    </div>
+
+  {% else %}
+    <div class="alert alert-warning mt-3">
+      ⚠️ Du nutzt aktuell die <strong>kostenlose Version</strong>.
+      <form action="{{ url_for('create_checkout_session') }}" method="POST" class="mt-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-gem"></i> Premium kaufen
+        </button>
+      </form>
+
+      <div class="card border-warning mt-4">
+        <div class="card-header fw-bold">Vorteile einer Premium-Mitgliedschaft</div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">⚡ Schnellere Verarbeitung deiner Aufgaben</li>
+          <li class="list-group-item">🔧 Mehr Funktionen und Tools</li>
+          <li class="list-group-item">🔐 Erhöhter Datenschutz und Sicherheit</li>
+          <li class="list-group-item">🤖 Erweiterte KI-Features</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="alert alert-warning mt-3">
+      <i class="fas fa-star"></i> Du bist aktuell kein Premium-Mitglied.
+      <a href="{{ url_for('premium') }}" class="btn btn-sm btn-outline-primary ml-2">Jetzt upgraden</a>
+    </div>
+  {% endif %}
+
+  <p class="mt-4">Hier ist dein persönliches Dashboard-Inhalt...</p>
+</div>
+{% endblock %}

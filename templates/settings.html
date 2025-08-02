@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block title %}Einstellungen{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">⚙️ Kontoeinstellungen</h2>
+
+  <!-- Flash-Meldungen -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-info">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- E-Mail ändern -->
+  <form method="POST" action="{{ url_for('update_email') }}" class="mb-4">
+    <div class="card p-4 shadow-sm">
+      <h4 class="mb-3">📧 E-Mail-Adresse ändern</h4>
+      <div class="mb-3">
+        <label class="form-label">Neue E-Mail-Adresse</label>
+        <input type="email" name="email" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary">E-Mail aktualisieren</button>
+    </div>
+  </form>
+
+  <!-- Passwort ändern -->
+  <form method="POST" action="{{ url_for('update_password') }}">
+    <div class="card p-4 shadow-sm">
+      <h4 class="mb-3">🔒 Passwort ändern</h4>
+      <div class="mb-3">
+        <label class="form-label">Neues Passwort</label>
+        <input type="password" name="password" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-secondary">Passwort aktualisieren</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
