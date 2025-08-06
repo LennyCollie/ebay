@@ -1,3 +1,4 @@
+print("🟢 App wird gestartet …")
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -6,6 +7,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, U
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import stripe
+import requests
 
 # ENV laden
 load_dotenv()
@@ -75,61 +77,31 @@ def register():
         return redirect(url_for("login"))
     return render_template("register.html")
 
-@app.route('/ebay-search', methods=['POST'])
+
+
+@app.route("/search", methods=["GET", "POST"])
 @login_required
-def ebay_search():
-    if not current_user.is_premium:
-        flash("Nur Premium-Nutzer dürfen suchen!", "danger")
-        return redirect(url_for('dashboard'))
-
-    query = request.form.get('query')
-    dummy_results = [
-        {"title": f"{query} Angebot 1", "price": "12,99 €"},
-        {"title": f"{query} Angebot 2", "price": "19,99 €"},
-        {"title": f"{query} Angebot 3", "price": "7,49 €"},
-    ]
-    return render_template('ebay_results.html', query=query, results=dummy_results)
-
-
-@app.route("/search", methods=["POST"])
 def search():
+    if not current_user.is_premium:
+        flash("Nur Premium-Nutzer dürfen diese Funktion nutzen.", "danger")
+        return redirect(url_for("dashboard"))
+
+    query = request.args.get("query") if request.method == "GET" else request.form.get("query")
+    if not query:
+        flash("Bitte gib einen Suchbegriff ein.", "warning")
+        return redirect(url_for("dashboard"))
+
     try:
-        # Beide Eingabetypen unterstützen: Formular ODER JSON
-        if request.is_json:
-            data = request.get_json()
-            query = data.get("query", "")
-        else:
-            query = request.form.get("query", "")
-
-        print(f"🔍 Benutzer sucht nach: {query}")
-
-        # Fake-Ergebnisse (nur für Anzeige)
-        fake_results = [
-            {
-                "title": f"{query} – Beispiel A",
-                "price": "19,99 €",
-                "image": "https://via.placeholder.com/300x200.png?text=Produkt+A",
-                "url": "https://www.ebay.de",
-            },
-            {
-                "title": f"{query} – Beispiel B",
-                "price": "24,95 €",
-                "image": "https://via.placeholder.com/300x200.png?text=Produkt+B",
-                "url": "https://www.ebay.de",
-            },
-            {
-                "title": f"{query} – Beispiel C",
-                "price": "12,49 €",
-                "image": "https://via.placeholder.com/300x200.png?text=Produkt+C",
-                "url": "https://www.ebay.de",
-            },
-        ]
-
-        # Jetzt wird das Template gerendert mit den Ergebnissen
-        return render_template("results.html", query=query, results=fake_results)
-
+        # Render-API aufrufen
+        api_url = "https://ebay-agent-cockpit.onrender.com/search"
+        response = requests.get(api_url, params={"q": query}, timeout=10)
+        response.raise_for_status()
+        results = response.json()
     except Exception as e:
-        return render_template("results.html", error=str(e), results=[])# Premium-Seite
+        return render_template("ebay_results.html", results=[], query=query, error=str(e))
+
+    return render_template("ebay_results.html", results=results, query=query)
+
 
 @app.route('/premium')
 @login_required
@@ -227,4 +199,5 @@ def page_not_found(e):
 
 
 if __name__ == "__main__":
+    print("🟢 Flask-Server startet ...")
     app.run(debug=True)
