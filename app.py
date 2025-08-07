@@ -199,17 +199,6 @@ def page_not_found(e):
 
 from flask import session  # Wichtig: Ganz oben ergänzen, falls noch nicht vorhanden
 
-# 🚪 Logout-Route
-@app.route("/logout")
-def logout():
-    # Sitzung löschen (optional)
-    session.clear()
-
-    # Erfolgsmeldung anzeigen
-    flash("Du wurdest erfolgreich ausgeloggt.")
-
-    # Zur Login-Seite weiterleiten
-    return redirect(url_for("login"))
 
 
 if __name__ == '__main__':
