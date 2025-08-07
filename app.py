@@ -1,8 +1,8 @@
-print("🟢 App wird gestartet …")
+print("\U0001F7E2 App wird gestartet …")
+
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
@@ -23,31 +23,27 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///ins
 
 # Datenbank & Login
 from models import db, User
+
 db.init_app(app)
 login_manager = LoginManager()
 login_manager.login_view = "login"
 login_manager.init_app(app)
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
-# Neue Startseite leitet auf Login
+# Startseite
 @app.route('/')
 @login_required
 def home():
     return redirect(url_for("dashboard"))
 
-# Dashboard (vorher: home)
 @app.route('/dashboard')
 @login_required
 def dashboard():
     return render_template("dashboard.html", user=current_user)
 
-
-# Login
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -63,8 +59,6 @@ def login():
             return redirect(url_for("login"))
     return render_template("login.html")
 
-
-# Registrierung
 @app.route('/register', methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -76,8 +70,6 @@ def register():
         flash("Registrierung erfolgreich!")
         return redirect(url_for("login"))
     return render_template("register.html")
-
-
 
 @app.route("/search", methods=["GET", "POST"])
 @login_required
@@ -92,7 +84,6 @@ def search():
         return redirect(url_for("dashboard"))
 
     try:
-        # Render-API aufrufen
         api_url = "https://ebay-agent-cockpit.onrender.com/search"
         response = requests.get(api_url, params={"q": query}, timeout=10)
         response.raise_for_status()
@@ -102,15 +93,12 @@ def search():
 
     return render_template("ebay_results.html", results=results, query=query)
 
-
 @app.route('/premium')
 @login_required
 def premium():
     premium_price = os.getenv("PREMIUM_PRICE", "5.00")
     return render_template('premium.html', price=premium_price)
 
-
-# Checkout-Session
 @app.route('/create-checkout-session', methods=['POST'])
 @login_required
 def create_checkout_session():
@@ -129,8 +117,6 @@ def create_checkout_session():
     except Exception as e:
         return str(e)
 
-
-# Einstellungen
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
@@ -146,8 +132,6 @@ def settings():
             message = "Passwort wurde aktualisiert."
     return render_template("settings.html", user=current_user, message=message)
 
-
-# Logout
 @app.route("/logout")
 @login_required
 def logout():
@@ -155,8 +139,6 @@ def logout():
     flash("Abgemeldet.")
     return redirect(url_for("login"))
 
-
-# Stripe Webhook
 @app.route("/webhook", methods=["POST"])
 def stripe_webhook():
     payload = request.data
@@ -165,40 +147,23 @@ def stripe_webhook():
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except stripe.error.SignatureVerificationError as e:
-        print("❌ Signature Error:", e)
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        print("❌ Webhook Fehler:", e)
         return jsonify({"error": str(e)}), 400
-
-    print("✅ Webhook empfangen:", event["type"])
 
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
         email = session.get("customer_email")
-        print("📧 Customer Email aus Session:", email)
-
-        try:
-            user = User.query.filter_by(email=email).first()
-            if user:
-                user.is_premium = True
-                db.session.commit()
-                print(f"✅ {email} wurde auf Premium gesetzt!")
-            else:
-                print("⚠️ Kein Benutzer mit dieser E-Mail gefunden:", email)
-        except Exception as e:
-            print("❌ DB-Fehler:", e)
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.is_premium = True
+            db.session.commit()
 
     return jsonify({"status": "success"}), 200
 
-
-# Fehlerseite (optional)
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
-
-
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
