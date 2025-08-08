@@ -6,4 +6,8 @@ http://127.0.0.1:5000/
 
 http://localhost:5000/register
 
-stripe listen --forward-to localhost:5000/webhook
+stripe listen --forward-to localhost:5000/WebHook
+
+git add app.py
+git commit -m "Fix: allow GET method for /search"
+git push
