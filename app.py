@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 import stripe
 import requests
 
+
+
 # ENV laden
 load_dotenv()
 
@@ -99,24 +101,24 @@ def premium():
     premium_price = os.getenv("PREMIUM_PRICE", "5.00")
     return render_template('premium.html', price=premium_price)
 
-@app.route('/create-checkout-session', methods=['POST'])
-@login_required
-def create_checkout_session():
-    try:
-        checkout_session = stripe.checkout.Session.create(
-            customer_email=current_user.email,
-            line_items=[{
-                'price': os.getenv("STRIPE_PRICE_ID"),
-                'quantity': 1,
-            }],
-            mode='subscription',
-            success_url=url_for('dashboard', _external=True) + '?success=true',
-            cancel_url=url_for('dashboard', _external=True) + '?canceled=true',
+@app.route("/checkout", methods=["GET","POST"])
+def public_checkout():
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip()
+        session = stripe.checkout.Session.create(
+            mode="subscription",
+            line_items=[{"price": os.getenv("STRIPE_PRICE_PRO"), "quantity": 1}],
+            customer_email=email,
+            success_url=os.getenv("STRIPE_SUCCESS_URL", url_for("checkout_success", _external=True)),
+            cancel_url=os.getenv("STRIPE_CANCEL_URL", url_for("public_pricing", _external=True)),
+            allow_promotion_codes=True,
         )
-        return redirect(checkout_session.url, code=303)
-    except Exception as e:
-        return str(e)
+        return redirect(session.url, code=303)
+    return render_template("public_checkout.html")
 
+@app.get("/checkout/success")
+def checkout_success():
+    return render_template("checkout_success.html")
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():

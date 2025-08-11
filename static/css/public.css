@@ -1,0 +1,14 @@
+:root{
+  --bs-primary:#4f7cff;
+  --bs-primary-rgb:79,124,255;
+}
+.btn-primary{
+  --bs-btn-bg:var(--bs-primary);
+  --bs-btn-border-color:var(--bs-primary);
+}
+.text-bg-primary{background-color:var(--bs-primary)!important;}
+.hero.bg-gradient{background:linear-gradient(180deg,var(--bs-body-bg),rgba(0,0,0,.02));}
+.demo-card{min-height:140px}
+.icon{font-size:28px}
+.testimonial{border:1px solid rgba(0,0,0,.06)}
+.navbar-brand img{height:22px}

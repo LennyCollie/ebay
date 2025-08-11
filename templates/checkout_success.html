@@ -1,0 +1,17 @@
+{% extends "public_base.html" %}
+{% block title %}Vielen Dank · ebay-agent-cockpit{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="card shadow-sm p-4 text-center">
+      <div class="display-6">✅</div>
+      <h1 class="h5 mt-2">Danke für deine Bestellung!</h1>
+      <p class="text-secondary">Deine Zahlung war erfolgreich. Dein Konto wird in Kürze freigeschaltet.</p>
+      <div class="d-flex gap-2 justify-content-center">
+        <a class="btn btn-primary" href="{{ url_for('login') }}">Zum Login</a>
+        <a class="btn btn-outline-secondary" href="{{ url_for('public_home') }}">Zur Startseite</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
