@@ -130,6 +130,37 @@ def checkout_success():
 def checkout_success():
     return render_template("checkout_success.html")
 
+@app.get("/_debug/stripe")
+def debug_stripe():
+    import stripe
+    import os
+
+    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+    price_id = os.getenv("STRIPE_PRICE_PRO")
+
+    result = {
+        "STRIPE_SECRET_KEY_set": bool(os.getenv("STRIPE_SECRET_KEY")),
+        "STRIPE_PUBLIC_KEY_set": bool(os.getenv("STRIPE_PUBLIC_KEY")),
+        "STRIPE_PRICE_PRO": price_id,
+        "can_list_prices": False,
+        "error": None
+    }
+
+    try:
+        prices = stripe.Price.list(limit=1)
+        result["can_list_prices"] = True
+        if price_id:
+            try:
+                stripe.Price.retrieve(price_id)
+                result["price_exists"] = True
+            except Exception as e:
+                result["price_exists"] = False
+                result["error"] = str(e)
+    except Exception as e:
+        result["error"] = str(e)
+
+    return result
+
 
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
