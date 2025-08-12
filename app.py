@@ -44,6 +44,10 @@ def public_home():
 def public_pricing():
     return render_template("public_pricing.html")
 
+@app.get("/debug")
+def debug_simple():
+    return {"alive": True}
+
 # -------------------------
 # Hauptseiten (Login nötig)
 # -------------------------
