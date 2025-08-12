@@ -9,8 +9,6 @@ from dotenv import load_dotenv
 import stripe
 import requests
 
-
-
 # ENV laden
 load_dotenv()
 
@@ -35,7 +33,20 @@ login_manager.init_app(app)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Startseite
+# -------------------------
+# Public Seiten
+# -------------------------
+@app.get("/public")
+def public_home():
+    return render_template("public_home.html")
+
+@app.get("/pricing")
+def public_pricing():
+    return render_template("public_pricing.html")
+
+# -------------------------
+# Hauptseiten (Login nötig)
+# -------------------------
 @app.route('/')
 @login_required
 def home():
@@ -46,6 +57,9 @@ def home():
 def dashboard():
     return render_template("dashboard.html", user=current_user)
 
+# -------------------------
+# Auth
+# -------------------------
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -73,6 +87,16 @@ def register():
         return redirect(url_for("login"))
     return render_template("register.html")
 
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("Abgemeldet.")
+    return redirect(url_for("login"))
+
+# -------------------------
+# Suche (nur Premium)
+# -------------------------
 @app.route("/search", methods=["GET", "POST"])
 @login_required
 def search():
@@ -95,6 +119,9 @@ def search():
 
     return render_template("ebay_results.html", results=results, query=query)
 
+# -------------------------
+# Premium / Stripe Checkout
+# -------------------------
 @app.route('/premium')
 @login_required
 def premium():
@@ -105,7 +132,6 @@ def premium():
 def public_checkout():
     if request.method == "POST":
         email = (request.form.get("email") or "").strip()
-
         try:
             session = stripe.checkout.Session.create(
                 mode="subscription",
@@ -117,51 +143,44 @@ def public_checkout():
             )
             return redirect(session.url, code=303)
         except Exception as e:
-            # hilft beim Debuggen, falls ENV/Preis-ID fehlt
             flash(f"Stripe-Fehler: {e}", "danger")
             return redirect(url_for("public_checkout"))
-
     return render_template("public_checkout.html")
 
 @app.get("/checkout/success")
 def checkout_success():
     return render_template("checkout_success.html")
-@app.get("/checkout/success")
-def checkout_success():
-    return render_template("checkout_success.html")
 
+# -------------------------
+# Debug-Route für Stripe
+# -------------------------
 @app.get("/_debug/stripe")
 def debug_stripe():
-    import stripe
-    import os
-
-    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
     price_id = os.getenv("STRIPE_PRICE_PRO")
-
     result = {
         "STRIPE_SECRET_KEY_set": bool(os.getenv("STRIPE_SECRET_KEY")),
         "STRIPE_PUBLIC_KEY_set": bool(os.getenv("STRIPE_PUBLIC_KEY")),
         "STRIPE_PRICE_PRO": price_id,
         "can_list_prices": False,
+        "price_exists": False,
         "error": None
     }
-
     try:
-        prices = stripe.Price.list(limit=1)
+        stripe.Price.list(limit=1)
         result["can_list_prices"] = True
         if price_id:
             try:
                 stripe.Price.retrieve(price_id)
                 result["price_exists"] = True
             except Exception as e:
-                result["price_exists"] = False
                 result["error"] = str(e)
     except Exception as e:
         result["error"] = str(e)
-
     return result
 
-
+# -------------------------
+# Einstellungen
+# -------------------------
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
@@ -177,18 +196,13 @@ def settings():
             message = "Passwort wurde aktualisiert."
     return render_template("settings.html", user=current_user, message=message)
 
-@app.route("/logout")
-@login_required
-def logout():
-    logout_user()
-    flash("Abgemeldet.")
-    return redirect(url_for("login"))
-
+# -------------------------
+# Stripe Webhook
+# -------------------------
 @app.route("/webhook", methods=["POST"])
 def stripe_webhook():
     payload = request.data
-    sig_header = request.headers.get("stripe-signature")
-
+    sig_header = request.headers.get("Stripe-Signature", "")
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except stripe.error.SignatureVerificationError as e:
@@ -197,8 +211,8 @@ def stripe_webhook():
         return jsonify({"error": str(e)}), 400
 
     if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        email = session.get("customer_email")
+        session_obj = event["data"]["object"]
+        email = session_obj.get("customer_email")
         user = User.query.filter_by(email=email).first()
         if user:
             user.is_premium = True
@@ -206,9 +220,15 @@ def stripe_webhook():
 
     return jsonify({"status": "success"}), 200
 
+# -------------------------
+# Error Handler
+# -------------------------
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
 
+# -------------------------
+# Start
+# -------------------------
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
