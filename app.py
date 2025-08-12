@@ -231,6 +231,15 @@ def stripe_webhook():
 def page_not_found(e):
     return render_template("404.html"), 404
 
+@app.get("/debug")
+def debug_simple():
+    return {"alive": True}
+
+@app.get("/routes")
+def list_routes():
+    # zeig mir, was Flask tatsächlich registriert hat
+    return {"routes": [rule.rule for rule in app.url_map.iter_rules()]}
+
 # -------------------------
 # Start
 # -------------------------
